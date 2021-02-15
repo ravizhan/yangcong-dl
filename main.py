@@ -227,13 +227,13 @@ class yc:
             elif int(publisher) == 4:
                 for i in range(27, 31): print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
             elif int(publisher) == 21:
-                for i in [17,18,31,32]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
+                for i in [20,21,34,35]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
             elif int(publisher) == 24:
-                for i in [17,18,19,20,31,32,33]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
+                for i in [20,21,22,23,34,35,36]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
             elif int(publisher) == 26:
-                for i in [17, 18]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
+                for i in [20, 21]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
             elif int(publisher) == 27:
-                for i in [17,18,31]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
+                for i in [20,21,34]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
         elif list(subjects.keys())[choice_sub] == '初中物理':
             if int(publisher) in [1,2]:
                 for i in [11,12,16]: print(str(i) + '.' + list(semesters.keys())[i - 1] + '  ', end='')
