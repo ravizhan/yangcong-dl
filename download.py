@@ -4,12 +4,15 @@ from requests import get
 
 
 def download(urls,names,download_dir):
-    if not os.path.exists('N_m3u8DL-CLI_v2.9.5.exe'):
+    if not os.path.exists('N_m3u8DL-CLI.exe') or not os.path.exists('ffmpeg.exe'):
         print('未检测到下载器,开始下载')
-        exe = get(
-            'https://download.ravizhan.workers.dev/?durl=https://github.com/nilaoda/N_m3u8DL-CLI/releases/download/2.9.5/N_m3u8DL-CLI_v2.9.5.exe').content
-        with open('N_m3u8DL-CLI_v2.9.5.exe', 'wb') as f:
+        exe = get('https://static.ravi.cool/N_m3u8DL-CLI.exe').content
+        with open('N_m3u8DL-CLI.exe', 'wb', encoding='utf-8') as f:
             f.write(exe)
+            f.close()
+        ffmpeg = get('https://static.ravi.cool/ffmpeg.exe').content
+        with open('ffmpeg.exe', 'wb', encoding='utf-8') as f:
+            f.write(ffmpeg)
             f.close()
         print('下载器下载完成')
     for i in range(0, len(urls)):
@@ -21,18 +24,17 @@ def download(urls,names,download_dir):
         print('\r进度:%d/%d' % (i + 1, len(urls)), end='')
         name = dic[urls[i].split('_')[1].split('.')[0]]
         # print(download_dir+'/'+name+'.mp4')
-        if not os.path.exists(download_dir+'/'+str(i)+name+'.mp4'):
-            vbs = '''
-            set ws=createobject("wscript.shell")
-            ws.run "1.bat",0
-            wscript.quit
+        if not os.path.exists(download_dir+'/'+str(i)+' '+name+'.mp4'):
+            vbs = '''set ws=createobject("wscript.shell")
+ws.run "1.bat",0
+wscript.quit
             '''
             # 使用vbs调用bat,实现bat后台运行
-            order = 'N_m3u8DL-CLI_v2.9.5.exe '+urls[i]+' --saveName "'+str(i)+name+'" --enableDelAfterDone --workDir "'+download_dir+'"\nexit'
-            with open('1.bat', 'w') as f:
+            order = 'chcp 65001\nN_m3u8DL-CLI.exe '+urls[i]+' --saveName "'+str(i)+' '+name+'" --enableDelAfterDone --workDir "'+download_dir+'"\nexit'
+            with open('1.bat', 'w', encoding='utf-8') as f:
                 f.write(order)
                 f.close()
-            with open('1.vbs', 'w', encoding='utf-8') as f:
+            with open('1.vbs', 'w') as f:
                 f.write(vbs)
                 f.close()
             os.system('start 1.vbs')

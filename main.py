@@ -1,4 +1,4 @@
-import requests,json,download
+import requests,json,download,decrypt
 
 class yc:
     def __init__(self):
@@ -95,7 +95,8 @@ class yc:
 
     def get_m3u8_url(self,themes_id):
         url2 = 'https://school-api.yangcong345.com/course/course-tree/themes/' + themes_id
-        res2 = json.loads(requests.get(url2, headers=self.header).text)
+        text = json.loads(requests.get(url2, headers=self.header).text)["encrypt_body"]
+        res2 = decrypt.dec(text)
         m3u8_urls, names = [], []
         for i in range(0, 10):
             try:
