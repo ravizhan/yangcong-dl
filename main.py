@@ -14,12 +14,9 @@ class yc:
         if choice1 == 1:
             self.authorization = input('authorization:')
         elif choice1 == 2:
-            print('用户登录(怕就直接回车吧，我要你账号也没啥用...)')
+            print('用户登录')
             username = input('用户名(手机号):')
             pw = input('密码:')
-            if username == '' or pw == '':
-                username = '17727171396'
-                pw = 'ABcd1234'
             self.authorization = self.login(username, pw)
         self.header = {
             'Authorization': self.authorization

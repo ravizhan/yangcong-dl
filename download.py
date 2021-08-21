@@ -7,11 +7,11 @@ def download(urls,names,download_dir):
     if not os.path.exists('N_m3u8DL-CLI.exe') or not os.path.exists('ffmpeg.exe'):
         print('未检测到下载器,开始下载')
         exe = get('https://static.ravi.cool/N_m3u8DL-CLI.exe').content
-        with open('N_m3u8DL-CLI.exe', 'wb', encoding='utf-8') as f:
+        with open('N_m3u8DL-CLI.exe', 'wb') as f:
             f.write(exe)
             f.close()
         ffmpeg = get('https://static.ravi.cool/ffmpeg.exe').content
-        with open('ffmpeg.exe', 'wb', encoding='utf-8') as f:
+        with open('ffmpeg.exe', 'wb') as f:
             f.write(ffmpeg)
             f.close()
         print('下载器下载完成')
