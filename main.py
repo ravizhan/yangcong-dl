@@ -226,6 +226,7 @@ if __name__ == '__main__':
     yangcong = yc()
     url, download_dir = yangcong.chooce()
     themes_ids = []
+    list1 = yangcong.get_themesid(url)
     # if "special" in url:
     #     list1 = yangcong.get_themesid_special(url)
     # else:
