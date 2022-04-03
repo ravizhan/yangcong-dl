@@ -1,6 +1,11 @@
 # Attention
 **本项目已停止更新。**
-具体原因见 [issues-2](https://github.com/ravizhan/yangcong-dl/issues/2)
+
+官方已修复漏洞，本项目已失效。
+
+请支持正版
+
+最后一次更新 [releases](https://github.com/ravizhan/yangcong-dl/releases)
 # yangcong-dl
 洋葱学院视频下载(无视VIP)
 # 关于开源
