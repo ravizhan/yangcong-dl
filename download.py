@@ -1,19 +1,22 @@
 import os
+import zipfile
 from time import sleep
 from requests import get
 
 
 def download(urls, names, download_dir):
-    if not os.path.exists('N_m3u8DL-CLI.exe') or not os.path.exists('ffmpeg.exe'):
+    if not os.path.exists('N_m3u8DL-CLI_v3.0.2.exe') or not os.path.exists('ffmpeg.exe'):
         print('未检测到下载器,开始下载')
-        exe = get('https://static.ravi.cool/N_m3u8DL-CLI.exe').content
-        with open('N_m3u8DL-CLI.exe', 'wb') as f:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'
+        }
+        exe = get('https://mirror.ghproxy.com/https://github.com/nilaoda/N_m3u8DL-CLI/releases/download/3.0.2/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', headers=headers).content
+        with open('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', 'wb') as f:
             f.write(exe)
-            f.close()
-        ffmpeg = get('https://static.ravi.cool/ffmpeg.exe').content
-        with open('ffmpeg.exe', 'wb') as f:
-            f.write(ffmpeg)
-            f.close()
+        file = zipfile.ZipFile('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', 'r')
+        file.extractall('./')
+        file.close()
+        os.remove('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip')
         print('下载器下载完成')
     for i in range(0, len(urls)):
         urls[i] = urls[i].replace('\n', '')
@@ -30,7 +33,7 @@ ws.run "1.bat",0
 wscript.quit
             '''
             # 使用vbs调用bat,实现bat后台运行
-            order = 'chcp 65001\nN_m3u8DL-CLI.exe ' + urls[i] + ' --saveName "' + str(
+            order = 'chcp 65001\nN_m3u8DL-CLI_v3.0.2.exe ' + urls[i] + ' --saveName "' + str(
                 i) + ' ' + name + '" --enableDelAfterDone --workDir "' + download_dir + '"\nexit'
             with open('1.bat', 'w', encoding='utf-8') as f:
                 f.write(order)
