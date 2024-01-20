@@ -1,6 +1,7 @@
 import os
 import zipfile
 from time import sleep
+
 from requests import get
 
 
@@ -10,14 +11,24 @@ def download(urls, names, download_dir):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'
         }
-        exe = get('https://mirror.ghproxy.com/https://github.com/nilaoda/N_m3u8DL-CLI/releases/download/3.0.2/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', headers=headers).content
-        with open('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', 'wb') as f:
-            f.write(exe)
+        try:
+            zip = get(
+                'https://mirror.ghproxy.com/https://github.com/nilaoda/N_m3u8DL-CLI/releases/download/3.0.2/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip',
+                headers=headers).content
+            with open('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', 'wb') as f:
+                f.write(zip)
+        except Exception:
+            print('下载器下载失败,请手动下载ZIP,并复制到此处')
+            print(
+                'https://github.com/nilaoda/N_m3u8DL-CLI/releases/download/3.0.2/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip')
+            input('操作完成后请回车')
         file = zipfile.ZipFile('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip', 'r')
         file.extractall('./')
         file.close()
         os.remove('N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG.zip')
+        os.remove('N_m3u8DL-CLI-SimpleG.exe')
         print('下载器下载完成')
+
     for i in range(0, len(urls)):
         urls[i] = urls[i].replace('\n', '')
     dic = chuli(urls, names)

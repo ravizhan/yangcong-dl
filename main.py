@@ -1,9 +1,9 @@
-import re
+import json
+
+import requests
 
 import decrypt
 import download
-import json
-import requests
 
 
 class yc:
@@ -44,21 +44,23 @@ class yc:
         res = requests.post('https://school-api.yangcong345.com/public/login', data=data, headers=header).headers
         return res['authorization']
 
-    def get_themesid(self, url):
+    def get_themesid(self, url, unit_list):
         res1 = requests.get(url, headers=self.header).text
         themes_ids, res = [], []
         res1 = json.loads(res1)
-        for a in range(0, 10):
+        for a in range(0, len(res1)):
+            if res1[a]["name"] not in unit_list:
+                continue
             try:
                 themes_ids.append(res1[a]['sections'][0]['subsections'][0]['themes'][0]['id'])
             except Exception:
                 continue
-            for b in range(0, 10):
+            for b in range(0, len(res1[a]['sections'])):
                 try:
                     themes_ids.append(res1[a]['sections'][b]['subsections'][0]['themes'][0]['id'])
                 except Exception:
                     continue
-                for c in range(0, 10):
+                for c in range(0, len(res1[a]['sections'][b]['subsections'])):
                     try:
                         themes_ids.append(res1[a]['sections'][b]['subsections'][c]['themes'][0]['id'])
                         themes_ids.append(res1[a]['sections'][b]['subsections'][c]['themes'][1]['id'])
@@ -110,7 +112,7 @@ class yc:
     def get_m3u8_url(self, themes_id):
         url2 = 'https://school-api.yangcong345.com/course/course-tree/themes/' + themes_id
         text = json.loads(requests.get(url2, headers=self.header).text)["encrypt_body"]
-        res2 = decrypt.dec(text)
+        res2 = decrypt.decrypt(text)
         m3u8_urls, names = [], []
         for i in range(0, 10):
             try:
@@ -132,32 +134,7 @@ class yc:
                 continue
         return m3u8_urls, names
 
-    # def get_m3u8_url_special(self, themes_id):
-    #     url2 = 'https://school-api.yangcong345.com/course/course-tree/themes/' + themes_id
-    #     text = json.loads(requests.get(url2, headers=self.header).text)["encrypt_body"]
-    #     res2 = decrypt.dec(text)
-    #     m3u8_urls, names = [], []
-    #     for i in range(0, 10):
-    #         try:
-    #             for a in range(0, 10):
-    #                 m3u8_url = res2['topics'][i]['video']['addresses'][a]['url']
-    #                 platform = res2['topics'][i]['video']['addresses'][a]['platform']
-    #                 format = res2['topics'][i]['video']['addresses'][a]['format']
-    #                 clarity = res2['topics'][i]['video']['addresses'][a]['clarity']
-    #                 if platform == 'pc' and format == 'hls' and clarity == 'high':
-    #                     if m3u8_url not in m3u8_urls:
-    #                         m3u8_urls.append(m3u8_url)
-    #         except Exception:
-    #             continue
-    #         try:
-    #             name = res2['topics'][i]['name']
-    #             names.append(name)
-    #             # print(m3u8_url)
-    #         except Exception:
-    #             continue
-    #     return m3u8_urls, names
-
-    def chooce(self):
+    def choose(self):
         data = json.loads(requests.get("https://school-api.yangcong345.com/course/subjects", headers=self.header).text)
         # print("学科")
         for i in data:
@@ -182,15 +159,6 @@ class yc:
             if id == stage_id:
                 temp["stage"] = {"index": i, "id": id, "name": name}
 
-        # url = 'https://school-api.yangcong345.com/course-tree/recommend-special-courses?stageId=%s&subjectId=%s' % (
-        # temp["stage"]["id"], temp["subject"]["id"])
-        # special = json.loads(requests.get(url, headers=self.header).text)
-        # if len(special) != 0:
-        #     print("检测到专题课，是否下载")
-        #     choose = int(input("1.下载 2.跳过\n请输入:"))
-        #     if choose == 1:
-        #         download_dir = temp["subject"]["name"] + "/" + temp["stage"]["name"]
-        #         return "https://school-api.yangcong345.com/course/special-course/"+special[0]["id"], download_dir
         # print("版本")
         index = temp["stage"]["index"]
         data = data[index]["publishers"]
@@ -214,23 +182,27 @@ class yc:
             name = data[i]["name"]
             if id == semester_id:
                 temp["semester"] = {"index": i, "id": id, "name": name}
-        print(temp)
-        url = "https://school-api.yangcong345.com/course/chapters-with-section/publisher/%s/semester/%s/subject/%s/stage/%s" % (
+        # print(temp)
+        url = "https://school-api.yangcong345.com/course/chapters-with-section/scene?publisherId=%s&semesterId=%s&subjectId=%s&stageId=%s" % (
             temp["publisher"]["id"], temp["semester"]["id"], temp["subject"]["id"], temp["stage"]["id"],)
         # print(url)
+        data = json.loads(requests.get(url, headers=self.header).text)
+        for i in range(len(data)):
+            print(i, data[i]["name"][2:])
+        unit = input("请输入单元 对应的的序号(用空格分隔)(全部直接回车):")
+        if unit == '':
+            unit_list = [data[i]["name"] for i in range(0, len(data))]
+        else:
+            unit_list = [data[int(i)]["name"] for i in unit.split(" ")]
         download_dir = temp["subject"]["name"] + "/" + temp["publisher"]["name"] + "/" + temp["semester"]["name"]
-        return url, download_dir
+        return url, unit_list, download_dir
 
 
 if __name__ == '__main__':
     yangcong = yc()
-    url, download_dir = yangcong.chooce()
+    url, unit_list, download_dir = yangcong.choose()
     themes_ids = []
-    list1 = yangcong.get_themesid(url)
-    # if "special" in url:
-    #     list1 = yangcong.get_themesid_special(url)
-    # else:
-    #     list1 = yangcong.get_themesid(url)
+    list1 = yangcong.get_themesid(url, unit_list)
     [themes_ids.append(i) for i in list1 if i not in themes_ids]
     m3u8_urls, video_names = [], []
     for i in range(0, len(themes_ids)):
@@ -245,10 +217,10 @@ if __name__ == '__main__':
         print(str(i + 1) + '.' + video_names[i])
     while True:
         try:
-            choose = input('请输入要下载的序号(用英文逗号分隔)(全部直接回车):')
+            choose = input('请输入要下载的序号(用空格分隔)(全部直接回车):')
             if choose == '':
                 break
-            choose = choose.split(',')
+            choose = choose.split(' ')
             break
         except:
             pass
