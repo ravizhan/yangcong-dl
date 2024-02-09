@@ -1,8 +1,5 @@
 import json
-
 import requests
-
-import decrypt
 import download
 
 
@@ -44,95 +41,26 @@ class yc:
         res = requests.post('https://school-api.yangcong345.com/public/login', data=data, headers=header).headers
         return res['authorization']
 
-    def get_themesid(self, url, unit_list):
-        res1 = requests.get(url, headers=self.header).text
-        themes_ids, res = [], []
-        res1 = json.loads(res1)
-        for a in range(0, len(res1)):
-            if res1[a]["name"] not in unit_list:
+    def get_topic_and_name(self, data: dict, unit_list: list):
+        topic_ids = []
+        name_list = []
+        for item in data:
+            if item["name"] not in unit_list:
                 continue
-            try:
-                themes_ids.append(res1[a]['sections'][0]['subsections'][0]['themes'][0]['id'])
-            except Exception:
-                continue
-            for b in range(0, len(res1[a]['sections'])):
-                try:
-                    themes_ids.append(res1[a]['sections'][b]['subsections'][0]['themes'][0]['id'])
-                except Exception:
-                    continue
-                for c in range(0, len(res1[a]['sections'][b]['subsections'])):
-                    try:
-                        themes_ids.append(res1[a]['sections'][b]['subsections'][c]['themes'][0]['id'])
-                        themes_ids.append(res1[a]['sections'][b]['subsections'][c]['themes'][1]['id'])
-                    except Exception:
-                        continue
-        for id in themes_ids:
-            if id not in res:
-                res.append(id)
-        return res
+            for section in item["sections"]:
+                for subsection in section["subsections"]:
+                    for theme in subsection["themes"]:
+                        for topic in theme["topics"]:
+                            topic_ids.append(topic["id"])
+                            name_list.append(topic["name"])
+        return topic_ids, name_list
 
-    # def get_themesid_special(self, url):
-    #     data = requests.get(url, headers=self.header).text
-    #     res = []
-    #     data = json.loads(data)["levels"]
-    #     pattern = re.compile('''videoId": ".{36}''')
-    #     for i in pattern.findall(json.dumps(data)):
-    #         res.append(str(i).replace('''videoId": "''',''))
-    #     return res
-
-    def get_names(self, url):
-        res1 = requests.get(url, headers=self.header).text
-        names, res = [], []
-        res1 = json.loads(res1)
-        for a in range(0, 10):
-            try:
-                names.append(res1[a]['name'])
-            except Exception:
-                continue
-            for b in range(0, 10):
-                try:
-                    names.append(res1[a]['sections'][b]['name'])
-                except Exception:
-                    continue
-                for c in range(0, 10):
-                    try:
-                        names.append(res1[a]['sections'][b]['subsections'][c]['name'])
-                    except Exception:
-                        continue
-                    for d in range(0, 10):
-                        try:
-                            names.append(res1[a]['sections'][b]['subsections'][c]['themes'][d]['name'])
-                        except Exception:
-                            continue
-        for id in names:
-            if id not in res:
-                res.append(id)
-        return res
-
-    def get_m3u8_url(self, themes_id):
-        url2 = 'https://school-api.yangcong345.com/course/course-tree/themes/' + themes_id
-        text = json.loads(requests.get(url2, headers=self.header).text)["encrypt_body"]
-        res2 = decrypt.decrypt(text)
-        m3u8_urls, names = [], []
-        for i in range(0, 10):
-            try:
-                for a in range(0, 10):
-                    m3u8_url = res2['topics'][i]['video']['addresses'][a]['url']
-                    platform = res2['topics'][i]['video']['addresses'][a]['platform']
-                    format = res2['topics'][i]['video']['addresses'][a]['format']
-                    clarity = res2['topics'][i]['video']['addresses'][a]['clarity']
-                    if platform == 'pc' and format == 'hls' and clarity == 'high':
-                        if m3u8_url not in m3u8_urls:
-                            m3u8_urls.append(m3u8_url)
-            except Exception:
-                continue
-            try:
-                name = res2['topics'][i]['name']
-                names.append(name)
-                # print(m3u8_url)
-            except Exception:
-                continue
-        return m3u8_urls, names
+    def get_m3u8_url(self, topic_id):
+        url = f"https://school-api.yangcong345.com/course/topics/{topic_id}/detail-universal"
+        data = requests.get(url, headers=self.header).json()
+        for i in data["video"]["addresses"]:
+            if i["clarity"] == "fullHigh" and i["platform"] == "pc":
+                return i["url"]
 
     def choose(self):
         data = json.loads(requests.get("https://school-api.yangcong345.com/course/subjects", headers=self.header).text)
@@ -195,26 +123,15 @@ class yc:
         else:
             unit_list = [data[int(i)]["name"] for i in unit.split(" ")]
         download_dir = temp["subject"]["name"] + "/" + temp["publisher"]["name"] + "/" + temp["semester"]["name"]
-        return url, unit_list, download_dir
+        return data, unit_list, download_dir
 
 
 if __name__ == '__main__':
     yangcong = yc()
-    url, unit_list, download_dir = yangcong.choose()
-    themes_ids = []
-    list1 = yangcong.get_themesid(url, unit_list)
-    [themes_ids.append(i) for i in list1 if i not in themes_ids]
-    m3u8_urls, video_names = [], []
-    for i in range(0, len(themes_ids)):
-        print('\r进度:%d/%d' % (i + 1, len(themes_ids)), end='')
-        a, b = yangcong.get_m3u8_url(themes_ids[i])
-        m3u8_urls.append(a)
-        video_names.append(b)
-    print('\n爬取完成')
-    m3u8_urls = [i for j in m3u8_urls for i in j]
-    video_names = [i for j in video_names for i in j]
-    for i in range(0, len(m3u8_urls)):
-        print(str(i + 1) + '.' + video_names[i])
+    data, unit_list, download_dir = yangcong.choose()
+    topics, names = yangcong.get_topic_and_name(data, unit_list)
+    for i in range(0, len(names)):
+        print(str(i) + '.' + names[i])
     while True:
         try:
             choose = input('请输入要下载的序号(用空格分隔)(全部直接回车):')
@@ -225,12 +142,17 @@ if __name__ == '__main__':
         except:
             pass
     if choose == '':
-        print('开始下载')
-        download.download(m3u8_urls, video_names, download_dir)
+        video_names, m3u8_urls = names, []
+        for i in range(0, len(topics)):
+            print('\r爬取进度:%d/%d' % (i + 1, len(topics)), end='')
+            m3u8_urls.append(yangcong.get_m3u8_url(topics[i]))
     elif choose != '':
-        res_m3u8_urls, res_video_names = [], []
+        video_names, m3u8_urls = [], []
         for i in choose:
-            res_m3u8_urls.append(m3u8_urls[int(i) - 1])
-            res_video_names.append(video_names[int(i) - 1])
-        print('开始下载')
-        download.download(res_m3u8_urls, res_video_names, download_dir)
+            video_names.append(names[int(i)])
+        for i in range(0, len(choose)):
+            print('\r爬取进度:%d/%d' % (i + 1, len(choose)), end='')
+            m3u8_urls.append(yangcong.get_m3u8_url(topics[int(choose[i])]))
+    print('\n爬取完成')
+    print('开始下载')
+    download.download(m3u8_urls, video_names, download_dir)
