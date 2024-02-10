@@ -31,7 +31,7 @@ python3 ./main.py
 本项目于2020年10月17日开源，采用AGPLv3许可证，请自觉遵守。
 
 ## 鸣谢
-- [fsf678](https://github.com/fsf678) 提供logo
+- L 提供logo
 
 ## 相关开源库
 ### N_m3u8DL-CLI
