@@ -1,5 +1,5 @@
 <p align="left">
-  <img align="left" height="200" src="https://i.miji.bid/2024/02/09/a7792bb63a9b5b3994df3142ad7d1e06.png" style="float: left;padding-right: 20px"/>
+  <img align="left" height="200" src="https://raw.githubusercontent.com/ravizhan/yangcong-dl/72618e7ee233c01bcc930fc62a456b4e74334c2c/logo2.svg" style="float: left;padding-right: 20px"/>
 </p>
 
 # yangcong-dl
