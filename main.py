@@ -4,6 +4,8 @@ import random
 import string
 
 import requests
+
+import decrypt
 import download
 
 
@@ -39,8 +41,9 @@ class YC:
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "zh-CN,zh;q=0.9",
             "Omvd": "yangcong345" + base64.b64encode(rand_string.encode()).decode(),
-            'Authorization': self.authorization,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.55"
+            "Authorization": self.authorization,
+            "Refer": "https://school.yangcongxueyuan.com/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
         }
 
     def login(self, username, password) -> str or None:
@@ -53,7 +56,10 @@ class YC:
         data = '{"name":"%s","password":"%s"}' % (username, password)
         header = {
             'Content-Type': 'application/json',
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.55"
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
         }
         res = requests.post('https://school-api.yangcong345.com/public/login', data=data, headers=header).headers
         if "authorization" in res:
@@ -70,27 +76,44 @@ class YC:
         """
         topic_ids = []
         name_list = []
+        theme_ids = []
         for item in data:
             if item["name"] not in unit_list:
                 continue
             for section in item["sections"]:
                 for subsection in section["subsections"]:
                     for theme in subsection["themes"]:
+                        theme_ids.append(theme["id"])
                         for topic in theme["topics"]:
                             topic_ids.append(topic["id"])
                             name_list.append(topic["name"])
-        return topic_ids, name_list
+        return theme_ids, topic_ids, name_list
 
-    def get_m3u8_url(self, topic_id) -> str:
-        """
-        获取视频m3u8地址
-        :param topic_id: topic_id
-        :return: 视频m3u8地址
-        """
+    def api_1(self, theme_id, topic_ids):
+        url = 'https://school-api.yangcong345.com/course/course-tree/themes/' + theme_id
+        text = json.loads(requests.get(url, headers=self.header).text)["encrypt_body"]
+        res = decrypt.decrypt(text)
+        video_urls = []
+        for topic in res["topics"]:
+            if topic["id"] not in topic_ids:
+                continue
+            for video in topic["video"]["addresses"]:
+                if video["platform"] == "pc" and video["format"] == "hls" and video["clarity"] == "high":
+                    if video["url"] is None:
+                        print("接口1失效")
+                        raise Exception
+                    video_urls.append(video["url"])
+        return video_urls
+
+    def api_2(self, topic_id):
         url = f"https://school-api.yangcong345.com/course/topics/{topic_id}/detail-universal"
         data = requests.get(url, headers=self.header).json()
+        print(data)
         for i in data["video"]["addresses"]:
-            if i["clarity"] == "fullHigh" and i["platform"] == "pc":
+            if i["clarity"] == "high" and i["format"] == "hls" and i["platform"] == "pc":
+                if i["url"] is None:
+                    print("接口2失效")
+                    raise Exception
                 return i["url"]
 
     def choose(self):
@@ -101,10 +124,10 @@ class YC:
         while True:
             try:
                 subject_id = int(input("请输入学科 对应的的序号:"))
-                if subject_id in range(len(data)):
+                if subject_id in [int(i["id"]) for i in data]:
                     break
                 print("输入错误")
-            except:
+            except Exception:
                 print("输入错误")
                 continue
         temp = {}
@@ -122,10 +145,10 @@ class YC:
         while True:
             try:
                 stage_id = int(input("请输入阶段 对应的的序号:"))
-                if stage_id in range(len(data)):
+                if stage_id in [int(i["id"]) for i in data]:
                     break
                 print("输入错误")
-            except:
+            except Exception:
                 print("输入错误")
                 continue
         for i in range(len(data)):
@@ -143,10 +166,10 @@ class YC:
 
             try:
                 publisher_id = int(input("请输入版本 对应的的序号:"))
-                if publisher_id in range(len(data)):
+                if publisher_id in [int(i["id"]) for i in data]:
                     break
                 print("输入错误")
-            except:
+            except Exception:
                 print("输入错误")
                 continue
         for i in range(len(data)):
@@ -163,10 +186,10 @@ class YC:
         while True:
             try:
                 semester_id = int(input("请输入学期 对应的的序号:"))
-                if semester_id in range(len(data)):
+                if semester_id in [int(i["id"]) for i in data]:
                     break
                 print("输入错误")
-            except:
+            except Exception:
                 print("输入错误")
                 continue
         for i in range(len(data)):
@@ -174,13 +197,14 @@ class YC:
             name = data[i]["name"]
             if id == semester_id:
                 temp["semester"] = {"index": i, "id": id, "name": name}
+
         # print(temp)
         url = "https://school-api.yangcong345.com/course/chapters-with-section/scene?publisherId=%s&semesterId=%s&subjectId=%s&stageId=%s" % (
             temp["publisher"]["id"], temp["semester"]["id"], temp["subject"]["id"], temp["stage"]["id"],)
         # print(url)
         data = requests.get(url, headers=self.header).json()
         for i in range(len(data)):
-            print(i, data[i]["name"][2:])
+            print(i, data[i]["name"])
         unit = input("请输入单元 对应的的序号(用空格分隔)(全部直接回车):")
         if unit == '':
             unit_list = [data[i]["name"] for i in range(0, len(data))]
@@ -198,30 +222,47 @@ if __name__ == '__main__':
         print(e)
         print('未知错误')
         input("按任意键退出")
-    topics, names = yangcong.get_topic_and_name(data, unit_list)
+    theme_ids, topic_ids, names = yangcong.get_topic_and_name(data, unit_list)
     for i in range(0, len(names)):
-        print(str(i) + '.' + names[i])
+        print(str(i) + ' ' + names[i])
     while True:
         try:
-            choose = input('请输入要下载的序号(用空格分隔)(全部直接回车):')
-            if choose == '':
+            choice = input('请输入要下载的序号(用空格分隔)(全部直接回车):')
+            if choice == '':
                 break
-            choose = choose.split(' ')
+            choice = choice.split(' ')
             break
-        except:
+        except Exception:
             pass
-    if choose == '':
-        video_names, m3u8_urls = names, []
-        for i in range(0, len(topics)):
-            print('\r爬取进度:%d/%d' % (i + 1, len(topics)), end='')
-            m3u8_urls.append(yangcong.get_m3u8_url(topics[i]))
-    elif choose != '':
-        video_names, m3u8_urls = [], []
-        for i in choose:
-            video_names.append(names[int(i)])
-        for i in range(0, len(choose)):
-            print('\r爬取进度:%d/%d' % (i + 1, len(choose)), end='')
-            m3u8_urls.append(yangcong.get_m3u8_url(topics[int(choose[i])]))
+    if choice == '':
+        video_names, video_urls = names, []
+        try:
+            for i in range(0, len(theme_ids)):
+                video_urls = video_urls + yangcong.api_1(theme_ids[i], topic_ids)
+                print('\r爬取进度:%d/%d' % (len(video_urls), len(video_names)), end='')
+                if len(video_urls) == len(video_names):
+                    break
+        except Exception:
+            print("接口1出错")
+            video_urls = []
+            for i in range(0, len(topic_ids)):
+                print('\r爬取进度:%d/%d' % (i + 1, len(topic_ids)), end='')
+                video_urls.append(yangcong.api_2(topic_ids[i]))
+    else:
+        video_names, video_urls = [names[int(i)] for i in choice], []
+        try:
+            for i in range(0, len(theme_ids)):
+                temp_topic_ids = [topic_ids[int(i)] for i in choice]
+                video_urls = video_urls + yangcong.api_1(theme_ids[i], temp_topic_ids)
+                print('\r爬取进度:%d/%d' % (len(video_urls), len(choice)), end='')
+                if len(video_urls) == len(video_names):
+                    break
+        except Exception:
+            print("接口1出错")
+            video_urls = []
+            for i in range(0, len(choice)):
+                print('\r爬取进度:%d/%d' % (i + 1, len(choice)), end='')
+                video_urls.append(yangcong.api_2(topic_ids[int(choice[i])]))
     print('\n爬取完成')
     print('开始下载')
-    download.download(m3u8_urls, video_names, download_dir)
+    download.download(video_urls, video_names, download_dir)

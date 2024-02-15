@@ -32,6 +32,7 @@ python3 ./main.py
 
 ## 鸣谢
 - L 提供logo
+- [fsf679](https://github.com/fsf678) 制作WebUI
 
 ## 相关开源库
 ### N_m3u8DL-CLI
