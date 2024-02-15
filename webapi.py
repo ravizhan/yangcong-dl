@@ -3,7 +3,9 @@ import json
 import random
 import string
 import os
+
 import requests
+
 import decrypt
 
 
@@ -71,16 +73,16 @@ class YCForWeb:
     def delete_authorization(self):
         try:
             os.remove('authorization.txt')
-        except:
+        except Exception:
             pass
 
-    def first_choose(self) -> dict:
+    def first_choose(self) -> (dict, str):
         """
         获取版本、学期、学科、阶段名称及ID
         :return: 版本、学期、学科、阶段名称及ID
         """
         self.data = requests.get("https://school-api.yangcong345.com/course/subjects", headers=self.header).json()
-        return [self.data, json.dumps(self.data)]
+        return self.data, json.dumps(self.data)
 
     def second_choose(self, publisher_id: str, semester_id: str, subject_id: str, stage_id: str) -> (list, str):
         """
@@ -119,7 +121,7 @@ class YCForWeb:
         :param unit_list: 单元列表 例: ["第一单元",···]
         :return: theme_ids, topic_ids, name_list(视频名称列表)
         """
-        self.theme_ids, self.topic_ids, self.name_list = [],[],[]
+        self.theme_ids, self.topic_ids, self.name_list = [], [], []
         for item in self.all_data:
             if item["name"] not in unit_list:
                 continue
@@ -152,7 +154,7 @@ class YCForWeb:
                         raise Exception
                     video_urls.append(video["url"])
         if len(video_urls) == 0:
-            print('(High画质)')
+            # print('(High画质)')
             for topic in res["topics"]:
                 if topic["id"] not in topic_ids:
                     continue
@@ -173,7 +175,7 @@ class YCForWeb:
         data = requests.get(url, headers=self.header).json()
         print(data)
         for i in data["video"]["addresses"]:
-            if i["clarity"] == "fullHigh" and i["format"] == "hls" and i["platform"] == "pc":
+            if i["clarity"] == "high" and i["format"] == "hls" and i["platform"] == "pc":
                 if i["url"] is None:
                     raise Exception
                 return i["url"]
@@ -190,8 +192,8 @@ class YCForWeb:
             video_names.append(self.name_list[index])
         try:
             for i in range(0, len(self.theme_ids)):
-                print('\r爬取进度:%d/%d' % (len(video_urls), len(chosen_topic_ids)), end='')
                 video_urls = video_urls + self.api_1(self.theme_ids[i], chosen_topic_ids)
+                print('\r爬取进度:%d/%d' % (len(video_urls), len(chosen_topic_ids)), end='')
                 if len(video_urls) == len(chosen_topic_ids):
                     break
             return video_urls
@@ -200,39 +202,9 @@ class YCForWeb:
             try:
                 video_urls = []
                 for i in range(0, len(chosen_topic_ids)):
-                    print('\r爬取进度:%d/%d' % (i + 1, len(chosen_topic_ids)), end='')
                     video_urls.append(self.api_2(self.topic_ids[i]))
+                    print('\r爬取进度:%d/%d' % (i + 1, len(chosen_topic_ids)), end='')
                 return video_urls
             except Exception:
                 print("接口2出错")
                 return None
-
-
-if __name__ == '__main__':
-    yangcong = YCForWeb(startmode=0, choice=0, a='Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1Yzg3OTY5YTQ5YjdkMDAwMWExNGZiYiIsInNuIjoiIiwicm9sZSI6InN0dWRlbnQiLCJleHRyYSI6IiIsImV4cGlyZXNJbiI6IjFkIiwiYXVkIjoidXNlciIsImV4cCI6MTcwNzk3ODc3OCwianRpIjoiZTQ3NGZkOGEtMTI2ZC00MGI4LTg1NDAtYjQwMjlmNzMwODI2IiwiaWF0IjoxNzA3ODkyMzc4LCJpc3MiOiJ0b2tlbi1zZXJ2ZXIiLCJzdWIiOiI2NWM4Nzk2OWE0OWI3ZDAwMDFhMTRmYmIifQ.fbHybffu3zOdEmCLSxzZOBxymv-MdUOnsJIfhBD0Aqs')
-
-    # # 登录
-    # # yangcong.authorization = ""
-    # # yangcong.login("username", "password")
-    #
-    # # 获取版本、学期、学科、阶段
-    data = yangcong.first_choose()
-    #
-    # # 选择版本、学期、学科、阶段
-    #
-    # # 获取单元列表
-    unit_list, path = yangcong.second_choose("1", "45", "4", "3")
-    # print(path)
-    #
-    # # 选择单元
-    #
-    _, topic_ids, name_list = yangcong.get_topic_and_name(unit_list)
-    # # print(topic_ids)
-    # # print(name_list)
-    #
-    # # 选择视频
-    #
-    # # 下载
-    download_urls = yangcong.get_download_url(["7c204ea5-d5ae-4cfe-b050-269cb950f043"])
-    print(download_urls)
-

@@ -4,14 +4,14 @@ from time import sleep
 from requests import get
 import threading
 
-global waitForNewDownloadTime
-waitForNewDownloadTime = 2.25
+waitForNewDownloadTime = 2.5
 
 
 def count_mp4_files(directory):
     try:
-        return len([name for name in os.listdir(directory) if name.endswith('.mp4') and os.path.isfile(os.path.join(directory, name))])
-    except:
+        return len([name for name in os.listdir(directory) if
+                    name.endswith('.mp4') and os.path.isfile(os.path.join(directory, name))])
+    except Exception:
         return 0
 
 
@@ -26,19 +26,17 @@ def checkDone(directory, all):
             if get_url and last != current_count:
                 url = 'http://127.0.0.1:5000/progress_up?data=' + str(current_count)
                 get(url)
-        except:
+        except Exception:
             get_url = False
-        os.system('cls')
-        print(f"下载进度： {current_count}/{all}(Videos)")
+        # os.system('cls')
+        # print(f"下载进度： {current_count}/{all}(Videos)")
         last = current_count
         if current_count == all:
             break
+    # print("done")
 
-    print("done")
 
-
-def download(urls, names, download_dir):
-    global waitForNewDownloadTime
+def download(urls, names, download_dir, web=False):
     if not os.path.exists('N_m3u8DL-CLI_v3.0.2.exe') or not os.path.exists('ffmpeg.exe'):
         print('未检测到下载器,开始下载')
         headers = {
@@ -67,9 +65,11 @@ def download(urls, names, download_dir):
     dic = chuli(urls, names)
     download_dir = './Downloads/' + download_dir
     print('视频将保存到' + download_dir)
-    threading.Thread(target=checkDone, args=(download_dir, len(urls))).start()
+    if web:
+        threading.Thread(target=checkDone, args=(download_dir, len(urls))).start()
+    print('正在创建下载任务')
     for i in range(0, len(urls)):
-        print('\r爬取进度:%d/%d' % (i + 1, len(urls)), end='')
+        print('\r进度:%d/%d' % (i + 1, len(urls)), end='')
         name = dic[urls[i].split('_')[1].split('.')[0]]
         # print(download_dir+'/'+name+'.mp4')
         if not os.path.exists(download_dir + '/' + str(i) + ' ' + name + '.mp4'):
@@ -91,6 +91,10 @@ wscript.quit
         else:
             print('\n' + download_dir + '/' + name + '.mp4' + ' 已存在，跳过')
     sleep(1.0)
+    if not web:
+        print('\n下载任务创建完成，请等待下载完成')
+        input('按任意键退出')
+
 
 def chuli(urls, names):
     dic = {}
