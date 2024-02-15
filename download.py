@@ -2,37 +2,36 @@ import os
 import zipfile
 from time import sleep
 from requests import get
+import threading
 
 global waitForNewDownloadTime
 waitForNewDownloadTime = 2.25
 
 
-def count_folders(directory):
-    # 初始化文件夹数量为0
-    folder_count = 0
-    # 检查目录下是否有文件夹，并计数
-    for item in os.listdir(directory):
-        if os.path.isdir(os.path.join(directory, item)):
-            folder_count += 1
-
-    return folder_count
+def count_mp4_files(directory):
+    try:
+        return len([name for name in os.listdir(directory) if name.endswith('.mp4') and os.path.isfile(os.path.join(directory, name))])
+    except:
+        return 0
 
 
 def checkDone(directory, all):
-    last = 0
     get_url = True
+    last = 0
     # 循环检查直到没有文件夹
     while True:
-        sleep(0.5)
-        current_count = count_folders(directory)
+        sleep(0.25)
+        current_count = count_mp4_files(directory)
         try:
-            if get_url:
-                url = 'http://127.0.0.1:5000/progress_up?data=' + str(all - current_count)
+            if get_url and last != current_count:
+                url = 'http://127.0.0.1:5000/progress_up?data=' + str(current_count)
                 get(url)
         except:
             get_url = False
-        print(f"下载进度： {all - current_count}/{all}(Videos)")
-        if current_count == 0:
+        os.system('cls')
+        print(f"下载进度： {current_count}/{all}(Videos)")
+        last = current_count
+        if current_count == all:
             break
 
     print("done")
@@ -68,6 +67,7 @@ def download(urls, names, download_dir):
     dic = chuli(urls, names)
     download_dir = './Downloads/' + download_dir
     print('视频将保存到' + download_dir)
+    threading.Thread(target=checkDone, args=(download_dir, len(urls))).start()
     for i in range(0, len(urls)):
         print('\r爬取进度:%d/%d' % (i + 1, len(urls)), end='')
         name = dic[urls[i].split('_')[1].split('.')[0]]
@@ -90,10 +90,7 @@ wscript.quit
             sleep(waitForNewDownloadTime)
         else:
             print('\n' + download_dir + '/' + name + '.mp4' + ' 已存在，跳过')
-    checkDone(download_dir, len(urls))
     sleep(1.0)
-    print('\n下载任务创建完成，请等待下载完成')
-
 
 def chuli(urls, names):
     dic = {}
