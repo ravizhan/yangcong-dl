@@ -1,0 +1,299 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no"/>
+    <meta name="renderer" content="webkit"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2.0.3/mdui.css">
+    <script src="https://unpkg.com/mdui@2.0.3/mdui.global.js"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:100,300,400,500,700,900">
+
+    <!-- ICONS -->
+
+    <!-- Filled -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Outlined -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+    <!-- Rounded -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <!-- Sharp -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+
+    <!-- Two Tone -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Two+Tone" rel="stylesheet">
+
+    <style>
+        .middle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #clss::part(menu) {
+            max-height: 450px;
+            max-width: 700px;
+            overflow: auto;
+        }
+        #unt::part(menu) {
+            max-height: 450px;
+            max-width: 700px;
+            overflow: auto;
+        }
+        #clss::part(text-field){
+            max-height: 150px;
+            overflow: auto;
+        }
+
+        #csdialog::part(panel) {
+            max-width: 1000px;
+        }
+
+    </style>
+
+    <title>yangcong-dl</title>
+</head>
+<body style="font-family: Noto Sans SC;">
+
+<mdui-card style="width: 75%;height: 80%;" class="middle">
+    <div style="margin: 1%">
+        <mdui-top-app-bar placement="top">
+            <img src="static/logo2.svg" width="32" height="32" style="top:5px;">
+            <mdui-top-app-bar-title>YangCong-DL</mdui-top-app-bar-title>
+            <div style="flex-grow: 1"></div>
+            <mdui-button-icon icon="logout" onclick="logout()"></mdui-button-icon>
+            <mdui-button-icon icon="code" href="https://github.com/ravizhan/yangcong-dl"></mdui-button-icon>
+        </mdui-top-app-bar>
+        <div style="height: 70px"></div>
+
+
+        <div style="width: 99%">
+            <mdui-select multiple placeholder="单元" id="unt">
+            </mdui-select>
+        </div>
+        <div style="width: 99%;max-height: 150px">
+            <mdui-select multiple placeholder="课程" id="clss">
+            </mdui-select>
+        </div>
+
+
+        <div style="position: absolute;bottom: 25px;right: 25px;">
+            <mdui-fab icon="download--rounded"
+                      onclick='download_vd()'></mdui-fab>
+            <br><br>
+            <mdui-fab icon="class--rounded"
+                      onclick='document.querySelector("#csdialog").open=true'></mdui-fab>
+        </div>
+
+
+    </div>
+    <p style="position: absolute;bottom: -5px;left:7px" id="prs-text">下载进度</p>
+    <mdui-linear-progress value="0" max="100" style="position: absolute;bottom: 1px;" id="prs"></mdui-linear-progress>
+</mdui-card>
+
+
+<mdui-dialog close-on-overlay-click id="csdialog" class="cdialog">
+    <mdui-top-app-bar slot="header">
+        <mdui-top-app-bar-title>&nbsp;&nbsp;选择查看的内容</mdui-top-app-bar-title>
+        <div style="position: absolute;top: 24px;right:30px" ><input type="checkbox" id = 'tickAll'/>勾选全部课程</div>
+    </mdui-top-app-bar>
+    <mdui-menu dense style="width: 120px" selects="single">
+        <!--        document.querySelector("#csdialog > mdui-menu").value-->
+        {% for subject in datas %}
+        <mdui-menu-item submenu-trigger="click">
+            {{ subject["name"] }}
+
+            {% for stage in subject["stages"] %}
+            <mdui-menu-item slot="submenu">
+                {{ stage["name"] }}
+
+                {% for publisher in stage["publishers"] %}
+                <mdui-menu-item slot="submenu">
+                    {{ publisher["name"] }}
+
+                    <!--                    <mdui-menu-item slot="submenu"-->
+                    <!--                                    value='{{ subject["name"] }}${{stage["name"]}}${{ publisher["name"] }}$全部'>-->
+                    <!--                        全部-->
+                    <!--                    </mdui-menu-item>-->
+                    {% for semester in publisher["semesters"] %}
+                    <mdui-menu-item slot="submenu"
+                                    value='{{ subject["name"] }}${{stage["name"]}}${{ publisher["name"] }}${{ semester["name"] }}'>
+                        {{ semester["name"] }}
+                    </mdui-menu-item>
+                    {% endfor %}
+
+                </mdui-menu-item>
+                {% endfor %}
+
+            </mdui-menu-item>
+            {% endfor %}
+
+        </mdui-menu-item>
+        {% endfor %}
+    </mdui-menu>
+
+
+    <div style="height:55px;width:800px">
+    </div>
+</mdui-dialog>
+
+
+<script>
+    let unt_list = []
+    var datas = JSON.parse(`{{jsdatas | safe}}`)
+    var path = ''
+
+    function logout() {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.open('GET', '/logout', true);
+        httpRequest.send();
+        location.reload();
+    }
+
+    function chooseOk() {
+        document.getElementById('clss').innerHTML = ''
+        document.getElementById('unt').innerHTML = ''
+        document.getElementById('clss').value = []
+        document.getElementById('unt').value = []
+
+        console.log(document.querySelector("#csdialog > mdui-menu").value)
+
+        var arr = document.querySelector("#csdialog > mdui-menu").value.split("$")
+        if (arr.slice(-1) == "全部") {
+            console.log(1)
+        } else {
+            let subject = datas.find(dict => dict.name === arr[0]);
+            let subject_id = subject['id']
+
+            let stage = subject['stages'].find(dict => dict.name === arr[1]);
+            let stage_id = stage['id']
+
+            let publisher = stage['publishers'].find(dict => dict.name === arr[2]);
+            let publisher_id = publisher['id']
+
+            let semester = publisher['semesters'].find(dict => dict.name === arr[3]);
+            let semester_id = semester['id']
+
+            path = subject['name'] + '/' + publisher['name'] + '/' + semester['name']
+
+            console.log(subject_id + " " + stage_id + " " + publisher_id + " " + semester_id)
+
+            var httpRequest = new XMLHttpRequest();
+            httpRequest.open('GET', "/chs2?subject_id=" + subject_id + "&stage_id=" + stage_id + "&publisher_id=" + publisher_id + "&semester_id=" + semester_id, true);
+            httpRequest.send();
+            httpRequest.onreadystatechange = function () {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    let text = httpRequest.response;//获取到json字符串，还需解析
+                    unt_list = JSON.parse(text)
+                    document.getElementById('unt').innerHTML = '';
+                    unt_list.forEach(item => {
+                        var newComponent = document.createElement('mdui-menu-item');
+                        newComponent.textContent = item;
+                        newComponent.value = item;
+                        document.getElementById('unt').appendChild(newComponent);
+                    });
+                    if (document.getElementById('tickAll').checked){
+                        document.getElementById('unt').value = unt_list
+                    }
+
+                }
+            };
+        }
+    }
+
+
+    document.querySelector("#csdialog").addEventListener("close", chooseOk);
+
+
+    document.getElementById('unt').addEventListener('change', () => {
+        unt_list_now = document.querySelector("#unt").value
+        if (unt_list_now.length == 0) {
+            return
+        }
+
+        var jsonData = JSON.stringify(unt_list_now);
+        fetch('/untsclass?data=' + encodeURIComponent(jsonData))
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('clss').innerHTML = '';
+                data[1].forEach(item => {
+                    var newComponent = document.createElement('mdui-menu-item');
+                    newComponent.textContent = item;
+                    newComponent.value = data[0][data[1].indexOf(item)]
+                    newComponent.id = data[0][data[1].indexOf(item)]
+                    document.getElementById('clss').appendChild(newComponent);
+                });
+                if( document.getElementById('tickAll').checked ){
+                    document.getElementById('clss').value = data[0];
+                }
+
+            })
+            .catch(error => console.error('Error:', error));
+    })
+
+    function checkProgress(vd_num) {
+        fetch('http://127.0.0.1:5000/progress')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('prs-text').innerText = "下载进度 " + (data / vd_num) * 100 + "% (" + data.toString() + "/" + vd_num.toString() + ")"
+                document.getElementById('prs').value = data.toString()
+
+                if (data !== vd_num) {
+                    setTimeout(() => {
+                        checkProgress(vd_num);
+                    }, 450);
+                } else {
+                    document.getElementById('prs-text').innerText = "下载已完成"
+                    mdui.alert({
+                        headline: "下载完成",
+                        description: "打开yangcong-dl目录下的 Downloads/"+path+"可看到下载的视频",
+                        confirmText: "OK",
+                        closeOnOverlayClick: true,
+                        closeOnEsc: true
+                    });
+                }
+            });
+    }
+
+    function download_vd() {
+        if (document.getElementById('clss').value.length == 0) {
+            mdui.alert({
+                headline: "警告 :(",
+                description: "你没有选择任何视频",
+                confirmText: "OK",
+                closeOnOverlayClick: true,
+                closeOnEsc: true
+            });
+            return;
+        }
+
+        var video_num = document.getElementById('clss').value.length
+        var ids = document.querySelector("#clss").value
+        document.getElementById('clss').value = []
+        const names = ids.map(id => document.getElementById(id).innerText);
+        var url = '/download?data=' + JSON.stringify([ids, names, path])
+        fetch(url)
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+
+        document.getElementById('prs-text').innerText = "爬取视频中"
+        document.getElementById('prs').value = "0"
+        document.getElementById('prs').max = video_num.toString()
+        mdui.snackbar({
+            message: "正在启动下载任务",
+        });
+
+        checkProgress(video_num)
+    }
+
+
+</script>
+</body>
+
+

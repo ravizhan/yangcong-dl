@@ -1,0 +1,128 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no"/>
+    <meta name="renderer" content="webkit"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2.0.3/mdui.css">
+    <script src="https://unpkg.com/mdui@2.0.3/mdui.global.js"></script>
+    <script src="https://unpkg.com/mdui@2.0.3/functions/alert.js"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:100,300,400,500,700,900">
+
+    <!-- ICONS -->
+
+    <!-- Filled -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Outlined -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+    <!-- Rounded -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <!-- Sharp -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+
+    <!-- Two Tone -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Two+Tone" rel="stylesheet">
+
+    <style>
+        .middle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+
+    <title>yangcong-dl</title>
+</head>
+<body style="font-family: Noto Sans SC;">
+<mdui-card style="width: 35%;height: 80%;" class="middle">
+    <div style="margin: 7px;">
+
+        <mdui-top-app-bar>
+            <img src="static/logo2.svg" width="32" height="32" style="top:5px;">
+            <mdui-top-app-bar-title>YangCong-DL</mdui-top-app-bar-title>
+            <div style="flex-grow: 1"></div>
+            <mdui-button-icon icon="code" href="https://github.com/ravizhan/yangcong-dl"></mdui-button-icon>
+        </mdui-top-app-bar>
+
+
+        <div class="middle" style="width: 65%;">
+            <mdui-tabs value="tab-1" style="width: 100%" id="tabs">
+                <mdui-tab value="tab-1">authorization&nbsp;&nbsp;<a href="www.baidu.com">了解</a></mdui-tab>
+                <mdui-tab value="tab-2">洋葱账号登录</mdui-tab>
+                <input value="autologin" type="checkbox" id = 'autologin'/><p>自动登录</p>
+
+                <mdui-tab-panel slot="panel" value="tab-1">
+                    <mdui-text-field label="authorization code" id="authorization"></mdui-text-field>
+                    <mdui-text-field style="visibility:hidden"></mdui-text-field>
+                </mdui-tab-panel>
+
+                <mdui-tab-panel slot="panel" value="tab-2">
+                    <mdui-text-field label="手机号" id="phone"></mdui-text-field>
+                    <mdui-text-field type="password" toggle-password label="密码" id="pswd"></mdui-text-field>
+                </mdui-tab-panel>
+            </mdui-tabs>
+
+            <p>&nbsp;</p>
+            <div style="text-align:center">
+                <mdui-fab extended icon="login" onclick="login()">登录 YangCong-DL</mdui-fab>
+            </div>
+
+
+        </div>
+
+    </div>
+</mdui-card>
+
+
+<script>
+    alert = mdui.alert
+    function postLg(mode,a,b) {
+        if (mode == 0){
+            var url = '/loginget?mode='+mode+"&a="+a
+        }else if(mode == 1){
+            var url = '/loginget?mode='+mode+"&a="+a+"&b="+b
+        }
+        if (document.getElementById('autologin').checked){
+            url = url + "&save=true"
+        }
+
+        var httpRequest = new XMLHttpRequest();//第一步：建立所需的对象
+        httpRequest.open('GET', url, true);
+        httpRequest.send();
+        httpRequest.onreadystatechange = function () {
+            if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                var text = httpRequest.responseText;//获取到json字符串，还需解析
+                if (text.startsWith("Error")){
+                    alert({
+                        headline: "Error",
+                        description: text+'\n[请检查您填写的信息,或者是今日登录数被洋葱限制]',
+                        confirmText: "OK",
+                    });
+                }else{
+                    location.reload();
+                }
+            }
+        };
+
+    }
+
+    async function login() {
+        var tab_value = document.getElementById('tabs').value
+        if (tab_value == "tab-1") {
+            var authorization = document.getElementById("authorization").value
+            postLg(0,authorization,'')
+        }else if (tab_value == "tab-2") {
+            var phone = document.getElementById("phone").value
+            var pswd = document.getElementById("pswd").value
+            await postLg(1,phone,pswd)
+        }
+    }
+</script>
+</body>
+</html>
