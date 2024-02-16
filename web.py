@@ -107,8 +107,31 @@ def vd_downld_progress_up():
     dl_progress = int(str(request.values.get('data')))
     return 'ok'
 
+@app.route('/video')
+def vp():
+    global yangcong
+    if os.path.exists('templates/video.html'):
+        if yangcong != None and yangcong.checkError()[1] == False:
+            cs=yangcong.first_choose()
+            return render_template("video.html",datas=cs[0],jsdatas=cs[1])
+        else:
+            if try_autologin():
+                cs=yangcong.first_choose()
+                return render_template("video.html",datas=cs[0],jsdatas=cs[1])
+            return render_template("login.html")
+    else:
+        return '<h1>没有在templates文件夹下找到video.html插件。安装后方可使用。</h1>'
+
+
+@app.route("/m3u8_url", methods=["GET"])
+def m3u8_url():
+    id = request.values.get("id")
+    return yangcong.get_download_url( [id] )[0]
+
 
 if __name__ == "__main__":
     print(
         '                 yangcong-dl\ngithub: https://github.com/ravizhan/yangcong-dl\nVersion 1.0.0     &  License： AGPL-3.0 license\n\n')
     app.run(port=5000, host="127.0.0.1")
+
+
