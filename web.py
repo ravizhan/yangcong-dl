@@ -32,8 +32,11 @@ def login():
     a = request.values.get("a")  # phone or code
     b = request.values.get("b")  # pswd
     save = request.values.get("save")  # pswd
+    try:
+        yangcong = webapi.YCForWeb(0, int(mode), a, b)
+    except:
+        return str("Error: authorization获取失败！")
 
-    yangcong = webapi.YCForWeb(0, int(mode), a, b)
     if yangcong.checkError()[1]:
         return str(yangcong.checkError()[0])
 
