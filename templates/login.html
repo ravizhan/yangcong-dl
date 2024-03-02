@@ -84,9 +84,9 @@
     alert = mdui.alert
     function postLg(mode,a,b) {
         if (mode == 0){
-            var url = '/loginget?mode='+mode+"&a="+a
+            var url = '/loginget?mode='+encodeURIComponent(mode)+"&a="+encodeURIComponent(a)
         }else if(mode == 1){
-            var url = '/loginget?mode='+mode+"&a="+a+"&b="+b
+            var url = '/loginget?mode='+encodeURIComponent(mode)+"&a="+encodeURIComponent(a)+"&b="+encodeURIComponent(b)
         }
         if (document.getElementById('autologin').checked){
             url = url + "&save=true"
@@ -120,6 +120,7 @@
         }else if (tab_value == "tab-2") {
             var phone = document.getElementById("phone").value
             var pswd = document.getElementById("pswd").value
+
             await postLg(1,phone,pswd)
         }
     }
