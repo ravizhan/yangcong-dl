@@ -26,10 +26,17 @@ class YCForWeb:
                     self.error = "Error authorization错误"
             elif choice == 1:
                 self.login(username=a, password=b)
-                if self.authorization is not None:
-                    pass
-                else:
+                try:
+                    self.authorization
+                except Exception:
                     self.error = "Error 账密登录错误"
+                    return
+                else:
+                    if self.authorization is not None:
+                        pass
+                    else:
+                        self.error = "Error 账密登录错误"
+                        return
         else:
             with open('authorization.txt', 'r') as f:
                 self.authorization = f.read()
